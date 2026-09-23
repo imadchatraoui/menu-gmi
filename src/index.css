@@ -3,8 +3,7 @@
 @tailwind utilities;
 
 body {
-  background-color: #121212;
-  color: #ff0000;
+  background-color: #2A1314; /* Messo in linea col tema GMI */
   margin: 0;
   overflow-x: hidden;
 }
