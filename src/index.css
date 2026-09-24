@@ -2,10 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
 body {
   background-color: #2A1314; /* Messo in linea col tema GMI */
   margin: 0;
+  padding: 0;
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }/* =========================================
    ANIMAZIONE INDICATORE SCROLL (GOOEY ARROW 50px)
    ========================================= */

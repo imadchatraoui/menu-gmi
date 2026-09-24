@@ -48,8 +48,6 @@ Math.map = function (n, start, stop, start2, stop2) {
   return ((n - start) / (stop - start)) * (stop2 - start2) + start2;
 };
 
-const PX_RATIO = typeof window !== 'undefined' ? window.devicePixelRatio : 1;
-
 class AsciiFilter {
   constructor(renderer, { fontSize, fontFamily, charset, invert } = {}) {
     this.renderer = renderer;
@@ -59,12 +57,14 @@ class AsciiFilter {
     this.domElement.style.left = '0';
     this.domElement.style.width = '100%';
     this.domElement.style.height = '100%';
+    this.domElement.style.overflow = 'hidden';
 
     this.pre = document.createElement('pre');
     this.domElement.appendChild(this.pre);
 
     this.canvas = document.createElement('canvas');
-    this.context = this.canvas.getContext('2d');
+    // willReadFrequently optimizes getImageData readbacks and eliminates GPU stall warnings
+    this.context = this.canvas.getContext('2d', { willReadFrequently: true });
     this.domElement.appendChild(this.canvas);
 
     this.deg = 0;
@@ -73,13 +73,28 @@ class AsciiFilter {
     this.fontFamily = fontFamily ?? "'Courier New', monospace";
     this.charset = charset ?? ' .\'`^",:;Il!i~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
 
-    this.context.webkitImageSmoothingEnabled = false;
-    this.context.mozImageSmoothingEnabled = false;
-    this.context.msImageSmoothingEnabled = false;
-    this.context.imageSmoothingEnabled = false;
+    if (this.context) {
+      this.context.webkitImageSmoothingEnabled = false;
+      this.context.mozImageSmoothingEnabled = false;
+      this.context.msImageSmoothingEnabled = false;
+      this.context.imageSmoothingEnabled = false;
+    }
 
     this.onMouseMove = this.onMouseMove.bind(this);
-    document.addEventListener('mousemove', this.onMouseMove);
+    window.addEventListener('mousemove', this.onMouseMove, { passive: true });
+    window.addEventListener('touchmove', this.onMouseMove, { passive: true });
+    window.addEventListener('touchstart', this.onMouseMove, { passive: true });
+  }
+
+  measureCharWidth() {
+    if (!this.context) return this.fontSize * 0.6;
+    this.context.font = `${this.fontSize}px ${this.fontFamily}`;
+    const sample = 'A'.repeat(100);
+    const metrics = this.context.measureText(sample);
+    if (metrics && metrics.width > 0) {
+      return metrics.width / 100;
+    }
+    return this.fontSize * 0.6;
   }
 
   setSize(width, height) {
@@ -93,25 +108,52 @@ class AsciiFilter {
   }
 
   reset() {
-    this.context.font = `${this.fontSize}px ${this.fontFamily}`;
-    const charWidth = this.context.measureText('A').width;
+    this.charWidth = this.measureCharWidth();
+    this.charHeight = this.fontSize;
 
-    this.cols = Math.floor(this.width / (this.fontSize * (charWidth / this.fontSize)));
-    this.rows = Math.floor(this.height / this.fontSize);
+    this.cols = Math.max(1, Math.floor(this.width / this.charWidth));
+    this.rows = Math.max(1, Math.floor(this.height / this.charHeight));
 
+    // Internal canvas resolution strictly matches character grid
     this.canvas.width = this.cols;
     this.canvas.height = this.rows;
+
+    // Physical display dimensions of the grid
+    const gridWidth = this.cols * this.charWidth;
+    const gridHeight = this.rows * this.charHeight;
+
+    // Center the character grid and canvas together inside the container
+    const offsetX = Math.max(0, (this.width - gridWidth) / 2);
+    const offsetY = Math.max(0, (this.height - gridHeight) / 2);
+
+    // Lock canvas position and size to exact grid dimensions
+    this.canvas.style.position = 'absolute';
+    this.canvas.style.left = `${offsetX}px`;
+    this.canvas.style.top = `${offsetY}px`;
+    this.canvas.style.width = `${gridWidth}px`;
+    this.canvas.style.height = `${gridHeight}px`;
+
+    // Lock <pre> to exact same pixel dimensions and position
     this.pre.style.fontFamily = this.fontFamily;
     this.pre.style.fontSize = `${this.fontSize}px`;
+    this.pre.style.lineHeight = `${this.charHeight}px`;
+    this.pre.style.letterSpacing = '0px';
+    this.pre.style.wordSpacing = '0px';
+    this.pre.style.fontVariantLigatures = 'none';
     this.pre.style.margin = '0';
     this.pre.style.padding = '0';
-    this.pre.style.lineHeight = '1em';
     this.pre.style.position = 'absolute';
-    this.pre.style.left = '0';
-    this.pre.style.top = '0';
+    this.pre.style.left = `${offsetX}px`;
+    this.pre.style.top = `${offsetY}px`;
+    this.pre.style.width = `${gridWidth}px`;
+    this.pre.style.height = `${gridHeight}px`;
+    this.pre.style.overflow = 'hidden';
     this.pre.style.zIndex = '9';
-    this.pre.style.backgroundAttachment = 'fixed';
+    // Use scroll attachment so background gradient stays locked to element on mobile
+    this.pre.style.backgroundAttachment = 'scroll';
     this.pre.style.mixBlendMode = 'difference';
+    this.pre.style.webkitTextSizeAdjust = 'none';
+    this.pre.style.textSizeAdjust = 'none';
   }
 
   render(scene, camera) {
@@ -119,25 +161,31 @@ class AsciiFilter {
 
     const w = this.canvas.width;
     const h = this.canvas.height;
-    this.context.clearRect(0, 0, w, h);
-    if (this.context && w && h) {
+    if (this.context && w > 0 && h > 0) {
+      this.context.clearRect(0, 0, w, h);
       this.context.drawImage(this.renderer.domElement, 0, 0, w, h);
+      this.asciify(this.context, w, h);
     }
 
-    this.asciify(this.context, w, h);
     this.hue();
   }
 
   onMouseMove(e) {
-    this.mouse = { x: e.clientX * PX_RATIO, y: e.clientY * PX_RATIO };
+    const evt = e.touches ? e.touches[0] : e;
+    if (!evt) return;
+    const bounds = this.domElement.getBoundingClientRect();
+    this.mouse = {
+      x: evt.clientX - bounds.left,
+      y: evt.clientY - bounds.top
+    };
   }
 
   get dx() {
-    return this.mouse.x - this.center.x;
+    return (this.mouse ? this.mouse.x : this.center.x) - this.center.x;
   }
 
   get dy() {
-    return this.mouse.y - this.center.y;
+    return (this.mouse ? this.mouse.y : this.center.y) - this.center.y;
   }
 
   hue() {
@@ -150,29 +198,41 @@ class AsciiFilter {
     if (w && h) {
       const imgData = ctx.getImageData(0, 0, w, h).data;
       let str = '';
+      const charset = this.charset;
+      const charsetLen = charset.length;
+      const invert = this.invert;
+
       for (let y = 0; y < h; y++) {
+        const rowOffset = y * 4 * w;
         for (let x = 0; x < w; x++) {
-          const i = x * 4 + y * 4 * w;
-          const [r, g, b, a] = [imgData[i], imgData[i + 1], imgData[i + 2], imgData[i + 3]];
+          const i = rowOffset + x * 4;
+          const a = imgData[i + 3];
 
           if (a === 0) {
             str += ' ';
             continue;
           }
 
-          let gray = (0.3 * r + 0.6 * g + 0.1 * b) / 255;
-          let idx = Math.floor((1 - gray) * (this.charset.length - 1));
-          if (this.invert) idx = this.charset.length - idx - 1;
-          str += this.charset[idx];
+          const r = imgData[i];
+          const g = imgData[i + 1];
+          const b = imgData[i + 2];
+
+          const gray = (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+          let idx = Math.floor((1 - gray) * (charsetLen - 1));
+          if (invert) idx = charsetLen - 1 - idx;
+          str += charset[idx] || ' ';
         }
         str += '\n';
       }
-      this.pre.innerHTML = str;
+      // textContent is substantially faster and avoids HTML entity bugs
+      this.pre.textContent = str;
     }
   }
 
   dispose() {
-    document.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('touchmove', this.onMouseMove);
+    window.removeEventListener('touchstart', this.onMouseMove);
   }
 }
 
@@ -251,15 +311,39 @@ class CanvAscii {
 
   async init() {
     try {
-      await document.fonts.load('600 200px "IBM Plex Mono"');
-      await document.fonts.load('500 12px "IBM Plex Mono"');
-    } catch (e) {
+      await document.fonts.load(`600 ${this.textFontSize}px "IBM Plex Mono"`);
+      await document.fonts.load(`500 ${this.asciiFontSize}px "IBM Plex Mono"`);
+    } catch {
       // Font loading failed, continue with fallback
     }
     await document.fonts.ready;
 
     this.setMesh();
     this.setRenderer();
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        if (this.filter && this.width > 0 && this.height > 0) {
+          this.setSize(this.width, this.height);
+        }
+      });
+    }
+  }
+
+  calculatePlaneSize() {
+    const textAspect = (this.textCanvas.width || 1) / (this.textCanvas.height || 1);
+    const vFov = (this.camera.fov * Math.PI) / 180;
+    const visibleH = 2 * Math.tan(vFov / 2) * this.camera.position.z;
+    const visibleW = visibleH * (this.width / this.height);
+
+    // On mobile portrait screens, fit plane within 85% of visible viewport width
+    const maxPlaneW = visibleW * 0.85;
+    const effectiveBaseH = Math.min(this.planeBaseHeight, maxPlaneW / textAspect);
+
+    return {
+      planeW: effectiveBaseH * textAspect,
+      planeH: effectiveBaseH
+    };
   }
 
   setMesh() {
@@ -274,10 +358,7 @@ class CanvAscii {
     this.texture = new THREE.CanvasTexture(this.textCanvas.texture);
     this.texture.minFilter = THREE.NearestFilter;
 
-    const textAspect = this.textCanvas.width / this.textCanvas.height;
-    const baseH = this.planeBaseHeight;
-    const planeW = baseH * textAspect;
-    const planeH = baseH;
+    const { planeW, planeH } = this.calculatePlaneSize();
 
     this.geometry = new THREE.PlaneGeometry(planeW, planeH, 36, 36);
     this.material = new THREE.ShaderMaterial({
@@ -296,6 +377,16 @@ class CanvAscii {
     this.scene.add(this.mesh);
   }
 
+  updateMeshDimensions() {
+    if (!this.mesh || !this.textCanvas) return;
+    const { planeW, planeH } = this.calculatePlaneSize();
+    if (this.geometry) {
+      this.geometry.dispose();
+    }
+    this.geometry = new THREE.PlaneGeometry(planeW, planeH, 36, 36);
+    this.mesh.geometry = this.geometry;
+  }
+
   setRenderer() {
     this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
     this.renderer.setPixelRatio(1);
@@ -310,8 +401,9 @@ class CanvAscii {
     this.container.appendChild(this.filter.domElement);
     this.setSize(this.width, this.height);
 
-    this.container.addEventListener('mousemove', this.onMouseMove);
-    this.container.addEventListener('touchmove', this.onMouseMove);
+    this.container.addEventListener('mousemove', this.onMouseMove, { passive: true });
+    this.container.addEventListener('touchmove', this.onMouseMove, { passive: true });
+    this.container.addEventListener('touchstart', this.onMouseMove, { passive: true });
   }
 
   setSize(w, h) {
@@ -321,6 +413,7 @@ class CanvAscii {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
 
+    this.updateMeshDimensions();
     this.filter.setSize(w, h);
 
     this.center = { x: w / 2, y: h / 2 };
@@ -332,6 +425,7 @@ class CanvAscii {
 
   onMouseMove(evt) {
     const e = evt.touches ? evt.touches[0] : evt;
+    if (!e) return;
     const bounds = this.container.getBoundingClientRect();
     const x = e.clientX - bounds.left;
     const y = e.clientY - bounds.top;
@@ -392,6 +486,7 @@ class CanvAscii {
     }
     this.container.removeEventListener('mousemove', this.onMouseMove);
     this.container.removeEventListener('touchmove', this.onMouseMove);
+    this.container.removeEventListener('touchstart', this.onMouseMove);
     this.clear();
     if (this.renderer) {
       this.renderer.dispose();
@@ -417,6 +512,10 @@ export default function ASCIIText({
     let cancelled = false;
     let observer = null;
     let ro = null;
+    let resizeTimeout = null;
+
+    let lastW = 0;
+    let lastH = 0;
 
     const createAndInit = async (container, w, h) => {
       const instance = new CanvAscii(
@@ -429,8 +528,44 @@ export default function ASCIIText({
       return instance;
     };
 
+    const attachResizeObserver = () => {
+      ro = new ResizeObserver(entries => {
+        if (!entries[0] || !asciiRef.current) return;
+        const { width: w, height: h } = entries[0].contentRect;
+        if (w <= 0 || h <= 0) return;
+
+        const wDiff = Math.abs(w - lastW);
+        const hDiff = Math.abs(h - lastH);
+
+        // Substantial width change: desktop window resize or mobile orientation flip
+        if (wDiff > 2) {
+          lastW = w;
+          lastH = h;
+          clearTimeout(resizeTimeout);
+          asciiRef.current.setSize(w, h);
+          return;
+        }
+
+        // On mobile devices, scrolling expands/collapses the dynamic URL address bar,
+        // causing height to shift by ~40-100px while width is strictly identical.
+        // We explicitly ignore these minor height fluctuations to prevent re-gridding and visual jumping!
+        if (hDiff > 160) {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            if (!cancelled && asciiRef.current) {
+              lastH = h;
+              asciiRef.current.setSize(w, h);
+            }
+          }, 150);
+        }
+      });
+      ro.observe(containerRef.current);
+    };
+
     const setup = async () => {
-      const { width, height } = containerRef.current.getBoundingClientRect();
+      const rect = containerRef.current.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
 
       if (width === 0 || height === 0) {
         observer = new IntersectionObserver(
@@ -442,38 +577,52 @@ export default function ASCIIText({
               observer = null;
 
               if (!cancelled) {
+                lastW = w;
+                lastH = h;
                 asciiRef.current = await createAndInit(containerRef.current, w, h);
                 if (!cancelled && asciiRef.current) {
                   asciiRef.current.load();
+                  attachResizeObserver();
                 }
               }
             }
           },
-          { threshold: 0.1 }
+          { threshold: 0.05 }
         );
         observer.observe(containerRef.current);
         return;
       }
 
+      lastW = width;
+      lastH = height;
       asciiRef.current = await createAndInit(containerRef.current, width, height);
       if (!cancelled && asciiRef.current) {
         asciiRef.current.load();
-
-        ro = new ResizeObserver(entries => {
-          if (!entries[0] || !asciiRef.current) return;
-          const { width: w, height: h } = entries[0].contentRect;
-          if (w > 0 && h > 0) {
-            asciiRef.current.setSize(w, h);
-          }
-        });
-        ro.observe(containerRef.current);
+        attachResizeObserver();
       }
     };
+
+    const handleOrientationChange = () => {
+      setTimeout(() => {
+        if (!cancelled && containerRef.current && asciiRef.current) {
+          const r = containerRef.current.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) {
+            lastW = r.width;
+            lastH = r.height;
+            asciiRef.current.setSize(r.width, r.height);
+          }
+        }
+      }, 150);
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange, { passive: true });
 
     setup();
 
     return () => {
       cancelled = true;
+      clearTimeout(resizeTimeout);
+      window.removeEventListener('orientationchange', handleOrientationChange);
       if (observer) observer.disconnect();
       if (ro) ro.disconnect();
       if (asciiRef.current) {
@@ -496,12 +645,13 @@ export default function ASCIIText({
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap');
 
+        .ascii-text-container {
+          overflow: hidden;
+          touch-action: none;
+        }
+
         .ascii-text-container canvas {
           position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
           image-rendering: optimizeSpeed;
           image-rendering: -moz-crisp-edges;
           image-rendering: -o-crisp-edges;
@@ -509,23 +659,30 @@ export default function ASCIIText({
           image-rendering: optimize-contrast;
           image-rendering: crisp-edges;
           image-rendering: pixelated;
+          pointer-events: none;
         }
 
         .ascii-text-container pre {
           margin: 0;
           user-select: none;
           padding: 0;
-          line-height: 1em;
           text-align: left;
           position: absolute;
-          left: 0;
-          top: 0;
           background-image: radial-gradient(circle, #ff6188 0%, #fc9867 50%, #ffd866 100%);
-          background-attachment: fixed;
+          background-size: 100% 100%;
+          background-position: center;
           -webkit-text-fill-color: transparent;
           -webkit-background-clip: text;
+          background-clip: text;
           z-index: 9;
           mix-blend-mode: difference;
+          -webkit-text-size-adjust: none;
+          text-size-adjust: none;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          touch-action: none;
+          pointer-events: none;
+          white-space: pre;
         }
 
         /* Invert colors after rendering the effect if in light mode */

@@ -1,66 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ASCIIText from './components/ASCIIText';
 import ScrollReveal from './components/ScrollReveal';
-
-// ==========================================
-// COMPONENTE CAROSELLO (3 Immagini)
-// ==========================================
-const MenuCarousel = () => {
-  const images = [
-    "/piatto1.jpg", 
-    "/piatto2.jpg", 
-    "/piatto3.jpg"
-  ];
-  
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const nextImg = () => setCurrentIndex((prev) => (prev + 1) % images.length);
-  const prevImg = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-
-  return (
-    <div className="relative w-full max-w-4xl mx-auto aspect-[4/3] md:aspect-video rounded-3xl overflow-hidden bg-[#1a0c0d] shadow-2xl border border-[#D8A86C]/20">
-      <AnimatePresence mode="wait">
-        <motion.img
-          key={currentIndex}
-          src={images[currentIndex]}
-          alt={`Specialità ${currentIndex + 1}`}
-          className="absolute inset-0 w-full h-full object-cover"
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-        />
-      </AnimatePresence>
-
-      {/* Pulsanti di navigazione */}
-      <div className="absolute inset-0 flex items-center justify-between p-4 md:p-8 z-10">
-        <button 
-          onClick={prevImg} 
-          className="p-3 md:p-4 rounded-full bg-[#2A1314]/60 backdrop-blur-md text-[#D8A86C] hover:bg-[#D8A86C] hover:text-[#2A1314] transition-all"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </button>
-        <button 
-          onClick={nextImg} 
-          className="p-3 md:p-4 rounded-full bg-[#2A1314]/60 backdrop-blur-md text-[#D8A86C] hover:bg-[#D8A86C] hover:text-[#2A1314] transition-all"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </button>
-      </div>
-
-      {/* Pallini indicatori in basso */}
-      <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-3 z-10">
-        {images.map((_, i) => (
-          <div 
-            key={i} 
-            className={`h-2.5 rounded-full transition-all duration-300 ${i === currentIndex ? 'w-8 bg-[#D8A86C]' : 'w-2.5 bg-[#D8A86C]/40'}`} 
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
+import MorphSlider from './components/MorphSlider';
 
 // ==========================================
 // COMPONENTE PRINCIPALE (App)
@@ -74,6 +17,9 @@ function App() {
     if (imageLoaded) {
       const timer = setTimeout(() => {
         setShowSplash(false);
+        setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 1100);
       }, 3000); 
       return () => clearTimeout(timer);
     }
@@ -86,13 +32,20 @@ function App() {
     }, 3000);
   };
 
+  // Elementi per il MorphSlider con le tue immagini e didascalie
+  const menuItems = [
+    { image: '/gatto1.jpg', caption: 'gatto1' },
+    { image: '/gatto2.jpg', caption: 'gatto2' },
+    { image: '/gatto3.jpg', caption: 'gatto3' }
+  ];
+
   return (
     <main className={`relative w-full min-h-[100dvh] bg-[#2A1314] flex flex-col ${showSplash ? 'h-[100dvh] overflow-hidden' : 'overflow-x-hidden'}`}>
       
       {/* =========================================
           SEZIONE HERO FISSA (Bloccata allo schermo, mai più zoom)
           ========================================= */}
-      <section className="fixed inset-0 w-full h-[100dvh] overflow-hidden flex flex-col pointer-events-none z-0">
+      <section className="fixed inset-0 w-full h-full overflow-hidden flex flex-col pointer-events-none z-0">
         
         {/* LOGO IN ALTO A SINISTRA (Riattiviamo i click solo qui) */}
         <motion.div 
@@ -172,7 +125,7 @@ function App() {
       {/* =========================================
           CONTENUTO SUCCESSIVO (Scorre sopra la Hero con un margine del 100vh)
           ========================================= */}
-      <section className="relative w-full min-h-screen bg-[#2A1314] z-20 mt-[100vh] px-6 py-24 md:py-32 flex flex-col items-center justify-start shadow-[0_-20px_40px_rgba(42,19,20,1)]">
+      <section className="relative w-full min-h-screen bg-[#2A1314] z-20 mt-[100svh] md:mt-[100vh] px-6 py-24 md:py-32 flex flex-col items-center justify-start shadow-[0_-20px_40px_rgba(42,19,20,1)]">
         
         {/* Testo animato con ScrollReveal */}
         <div className="w-full max-w-4xl mx-auto mb-24 text-center">
@@ -190,8 +143,27 @@ function App() {
           </ScrollReveal>
         </div>
 
-        {/* Carosello Immagini */}
-        <MenuCarousel />
+        {/* MorphSlider integrato al posto del carosello base */}
+        <div className="w-full max-w-4xl aspect-[4/3] md:aspect-video relative rounded-2xl overflow-hidden shadow-2xl border border-[#D8A86C]/20">
+          <MorphSlider
+            items={menuItems}
+            transition="melt"
+            intensity={0.55}
+            aberration={0.35}
+            drift={0.4}
+            autoplay={true}
+            autoplayDelay={4}
+            overlayColor="#2A1314"
+            duration={1.1}
+            ease="power2.inOut"
+            scale={2.4}
+            loop={true}
+            radius={16}
+            showCaptions={true}
+            showControls={true}
+            showIndicators={true}
+          />
+        </div>
 
       </section>
 
