@@ -1,18 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ASCIIText from './components/ASCIIText';
+import ScrollReveal from './components/ScrollReveal';
 
+// ==========================================
+// COMPONENTE CAROSELLO (3 Immagini)
+// ==========================================
+const MenuCarousel = () => {
+  const images = [
+    "/piatto1.jpg", 
+    "/piatto2.jpg", 
+    "/piatto3.jpg"
+  ];
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextImg = () => setCurrentIndex((prev) => (prev + 1) % images.length);
+  const prevImg = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  return (
+    <div className="relative w-full max-w-4xl mx-auto aspect-[4/3] md:aspect-video rounded-3xl overflow-hidden bg-[#1a0c0d] shadow-2xl border border-[#D8A86C]/20">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={currentIndex}
+          src={images[currentIndex]}
+          alt={`Specialità ${currentIndex + 1}`}
+          className="absolute inset-0 w-full h-full object-cover"
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      </AnimatePresence>
+
+      {/* Pulsanti di navigazione */}
+      <div className="absolute inset-0 flex items-center justify-between p-4 md:p-8 z-10">
+        <button 
+          onClick={prevImg} 
+          className="p-3 md:p-4 rounded-full bg-[#2A1314]/60 backdrop-blur-md text-[#D8A86C] hover:bg-[#D8A86C] hover:text-[#2A1314] transition-all"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button 
+          onClick={nextImg} 
+          className="p-3 md:p-4 rounded-full bg-[#2A1314]/60 backdrop-blur-md text-[#D8A86C] hover:bg-[#D8A86C] hover:text-[#2A1314] transition-all"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+
+      {/* Pallini indicatori in basso */}
+      <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-3 z-10">
+        {images.map((_, i) => (
+          <div 
+            key={i} 
+            className={`h-2.5 rounded-full transition-all duration-300 ${i === currentIndex ? 'w-8 bg-[#D8A86C]' : 'w-2.5 bg-[#D8A86C]/40'}`} 
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// COMPONENTE PRINCIPALE (App)
+// ==========================================
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
-  
   const [headerAnimating, setHeaderAnimating] = useState(false);
 
   useEffect(() => {
     if (imageLoaded) {
       const timer = setTimeout(() => {
         setShowSplash(false);
-      }, 2500); 
+      }, 3000); 
       return () => clearTimeout(timer);
     }
   }, [imageLoaded]);
@@ -21,22 +83,20 @@ function App() {
     setHeaderAnimating(true); 
     setTimeout(() => {
       window.location.reload();
-    }, 2500);
+    }, 3000);
   };
 
   return (
-    // MODIFICA CSS: Cambiato "h-[100dvh]" in "min-h-[100dvh]" e "overflow-hidden" in "overflow-x-hidden". 
-    // Ora il sito può scorrere verso il basso!
-    <main className="relative w-full min-h-[100dvh] bg-[#2A1314] overflow-x-hidden flex flex-col">
+    <main className={`relative w-full min-h-[100dvh] bg-[#2A1314] flex flex-col ${showSplash ? 'h-[100dvh] overflow-hidden' : 'overflow-x-hidden'}`}>
       
       {/* =========================================
-          SEZIONE HERO (Prima schermata)
+          SEZIONE HERO FISSA (Bloccata allo schermo, mai più zoom)
           ========================================= */}
-      <section className="relative w-full h-[100dvh] flex flex-col">
+      <section className="fixed inset-0 w-full h-[100dvh] overflow-hidden flex flex-col pointer-events-none z-0">
         
-        {/* LOGO IN ALTO A SINISTRA */}
+        {/* LOGO IN ALTO A SINISTRA (Riattiviamo i click solo qui) */}
         <motion.div 
-          className="absolute top-6 left-6 z-50 cursor-pointer" 
+          className="absolute top-6 left-6 z-50 cursor-pointer pointer-events-auto" 
           initial={{ opacity: 0 }}
           animate={{ opacity: showSplash ? 0 : 1 }}
           transition={{ duration: 1, delay: 0.2 }}
@@ -51,19 +111,21 @@ function App() {
 
         {/* TESTO ASCII 3D */}
         <motion.div 
-          className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+          className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: showSplash ? 0 : 1 }}
           transition={{ duration: 1, delay: 0.2 }}
         >
-          <ASCIIText
-            text="MENU"
-            enableWaves={true}
-            asciiFontSize={9} 
-            textFontSize={80} 
-            planeBaseHeight={5.8} 
-            textColor="#D8A86C" 
-          />
+          <div className="w-full h-full flex items-center justify-center transform-gpu">
+            <ASCIIText
+              text="MENU"
+              enableWaves={true}
+              asciiFontSize={9} 
+              textFontSize={80} 
+              planeBaseHeight={5.8} 
+              textColor="#D8A86C" 
+            />
+          </div>
         </motion.div>
 
         {/* INDICATORE SCROLL (Gooey Arrow Animata) */}
@@ -108,14 +170,29 @@ function App() {
       </section>
 
       {/* =========================================
-          CONTENUTO SUCCESSIVO (Carosello, testo, ecc.)
+          CONTENUTO SUCCESSIVO (Scorre sopra la Hero con un margine del 100vh)
           ========================================= */}
-      <section className="relative w-full min-h-screen bg-[#2A1314] z-20 flex items-center justify-center text-[#D8A86C]">
-        {/* Qui inserirai il tuo carosello. Per ora ho messo un segnaposto per testare lo scroll */}
-        <div className="text-center">
-          <h2 className="text-2xl font-bold tracking-widest uppercase">I Nostri Piatti</h2>
-          <p className="mt-4 opacity-70">Il carosello andrà qui.</p>
+      <section className="relative w-full min-h-screen bg-[#2A1314] z-20 mt-[100vh] px-6 py-24 md:py-32 flex flex-col items-center justify-start shadow-[0_-20px_40px_rgba(42,19,20,1)]">
+        
+        {/* Testo animato con ScrollReveal */}
+        <div className="w-full max-w-4xl mx-auto mb-24 text-center">
+          <ScrollReveal
+            baseOpacity={0.5}
+            enableBlur={true}
+            baseRotation={2}
+            blurStrength={9}
+            wordAnimationEnd="bottom center" 
+            rotationEnd="bottom center"
+          >
+            Benvenuti in GMI Torino. Preparati a vivere un'esperienza sensoriale 
+            fatta di ingredienti rigorosamente selezionati, pura tradizione e 
+            una vera passione per l'eccellenza.
+          </ScrollReveal>
         </div>
+
+        {/* Carosello Immagini */}
+        <MenuCarousel />
+
       </section>
 
      {/* =========================================
