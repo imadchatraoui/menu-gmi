@@ -437,13 +437,24 @@ class CanvAscii {
   }
 
   animate() {
+    // Initialize visibility observer if not present
+    if (this.isVisible === undefined) {
+      this.isVisible = true;
+      try {
+        this.visObserver = new IntersectionObserver(([entry]) => {
+          this.isVisible = entry.isIntersecting;
+        });
+        if (this.container) this.visObserver.observe(this.container);
+      } catch (e) {}
+    }
+
     const isMobile = window.matchMedia('(max-width: 768px)').matches || /Mobi|Android/i.test(navigator.userAgent);
     const fpsLimit = isMobile ? 30 : 60;
     const interval = 1000 / fpsLimit;
     let lastTime = 0;
     const animateFrame = (now) => {
       this.animationFrameId = requestAnimationFrame(animateFrame);
-      if (now - lastTime < interval) return;
+      if (!this.isVisible || this.isPaused || now - lastTime < interval) return;
       lastTime = now;
       this.render();
     };
@@ -511,10 +522,17 @@ export default function ASCIIText({
   textFontSize = 200,
   textColor = '#fdf9f3',
   planeBaseHeight = 8,
-  enableWaves = true
+  enableWaves = true,
+  paused = false
 }) {
   const containerRef = useRef(null);
   const asciiRef = useRef(null);
+
+  useEffect(() => {
+    if (asciiRef.current) {
+      asciiRef.current.isPaused = paused;
+    }
+  }, [paused]);
 
   useEffect(() => {
     if (!containerRef.current) return;

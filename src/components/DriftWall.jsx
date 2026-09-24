@@ -41,7 +41,8 @@ const DriftWall = ({
   grayscale = false,
   overlayColor = '#060010',
   className = '',
-  style
+  style,
+  paused = false
 }) => {
   const containerRef = useRef(null);
   const planeRef = useRef(null);
@@ -120,13 +121,21 @@ const DriftWall = ({
   );
 
   useEffect(() => {
+    let isVisible = true;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    });
+    if (containerRef.current) observer.observe(containerRef.current);
+
     const isMobileForFPS = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
     const fpsLimit = isMobileForFPS ? 30 : 60;
     const frameInterval = 1000 / fpsLimit;
     let lastFrameTime = 0;
 
     const animate = ts => {
-      if (ts - lastFrameTime < frameInterval) {
+      const isActuallyVisible = isVisible && !paused;
+      if (!isActuallyVisible || ts - lastFrameTime < frameInterval) {
+        if (!isActuallyVisible) lastTsRef.current = ts;
         rafRef.current = requestAnimationFrame(animate);
         return;
       }
@@ -174,11 +183,12 @@ const DriftWall = ({
 
     rafRef.current = requestAnimationFrame(animate);
     return () => {
+      observer.disconnect();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       lastTsRef.current = null;
     };
-  }, [baseVelocities, columnMeta, pauseOnHover, parallax, reduced, applyPlaneTransform]);
+  }, [baseVelocities, columnMeta, pauseOnHover, parallax, reduced, applyPlaneTransform, paused]);
 
   const activate = useCallback((id, index) => {
     activeIdRef.current = id;

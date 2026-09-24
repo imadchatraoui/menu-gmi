@@ -46,21 +46,6 @@ const ACCORDION_ITEMS = [
     )
   },
   {
-    title: 'Surah Al-Baqarah (2:172-173)',
-    defaultOpen: true,
-    content: (
-      <div>
-        <p style={{ fontStyle: 'italic', lineHeight: 1.7, marginBottom: '10px' }}>
-          "O voi che credete, mangiate le buone cose di cui vi abbiamo provvisto e ringraziate
-          Allah, se è Lui che adorate."
-        </p>
-        <p style={{ fontSize: '0.78rem', opacity: 0.6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Corano, Surah Al-Baqarah · 2:172-173
-        </p>
-      </div>
-    )
-  },
-  {
     title: 'Programma',
     content: (
       <ul style={{ paddingLeft: '0', listStyle: 'none', lineHeight: 1.8, margin: 0, fontSize: '0.85rem' }}>
@@ -106,6 +91,19 @@ function App() {
   const [headerAnimating, setHeaderAnimating] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activePage, setActivePage] = useState(null); // null | 'menu' | 'evento' | 'chisiamo' | 'contatti'
+  const [heroVisible, setHeroVisible] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHeroVisible(window.scrollY < (window.innerHeight || document.documentElement.clientHeight) * 1.2);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Rendiamo i componenti pesanti della Hero solo se visibili e se nessuna sub-page è attiva a schermo intero
+  const shouldRenderHero = heroVisible && !activePage;
 
   useEffect(() => {
     if (imageLoaded) {
@@ -198,6 +196,7 @@ function App() {
             fade={0.65}
             dim={0.42}
             overlayColor="#713336"
+            paused={!shouldRenderHero}
           />
         </motion.div>
 
@@ -216,6 +215,7 @@ function App() {
               textFontSize={80}
               planeBaseHeight={5.8}
               textColor="#D8A86C"
+              paused={!shouldRenderHero}
             />
           </div>
         </motion.div>
@@ -328,6 +328,17 @@ function App() {
               <Accordion items={ACCORDION_ITEMS} />
             </div>
 
+            {/* Verso del Corano (Fisso in basso) */}
+            <div className="w-full max-w-2xl text-center mt-12 mb-6 px-4 mx-auto border-t border-[#D8A86C]/10 pt-10">
+              <p className="italic text-sm sm:text-base leading-relaxed mb-3 text-[rgba(255,255,255,0.85)]">
+                "O voi che credete, mangiate le buone cose di cui vi abbiamo provvisto e ringraziate
+                Allah, se è Lui che adorate."
+              </p>
+              <p className="text-[10px] sm:text-xs text-[#D8A86C] tracking-[0.15em] uppercase opacity-80">
+                Corano, Surah Al-Baqarah · 2:172-173
+              </p>
+            </div>
+
             {/* Footer bottom */}
             <div className="mt-6 flex flex-col items-center gap-3">
               <p className="text-xs opacity-40 tracking-widest uppercase">
@@ -407,9 +418,17 @@ function App() {
             className="fixed inset-0 z-[150] flex items-center justify-center bg-[#2A1314]"
             exit={{ opacity: 0 }}
             transition={{ duration: 1 }}
+            onAnimationComplete={(definition) => {
+              // Quando l'animazione di uscita è completa (opacity 0), forziamo il browser a svuotare l'immagine
+              if (definition.opacity === 0) {
+                const img = document.getElementById('splash-img');
+                if (img) img.src = '';
+              }
+            }}
           >
             <motion.img
-              src="/cropped gmi.gif"
+              id="splash-img"
+              src="/cropped gmi.webp"
               alt="GMI Torino"
               className="w-56 sm:w-64 h-auto object-contain"
               onLoad={() => setImageLoaded(true)}

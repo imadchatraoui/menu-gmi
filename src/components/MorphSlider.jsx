@@ -277,8 +277,18 @@ class MorphEngine {
     this.canvas.addEventListener('webglcontextlost', this.boundContextLost, false);
 
     // Pause rendering when tab is hidden — saves battery on old phones
-    this._visible = !document.hidden;
-    this._visibilityHandler = () => { this._visible = !document.hidden; };
+    this._visible = true;
+    this._visObserver = new IntersectionObserver(([entry]) => {
+      this._visible = entry.isIntersecting && !document.hidden;
+    });
+    this._visObserver.observe(container);
+    
+    this._visibilityHandler = () => {
+      if (this._visObserver) {
+        // Just rely on the intersecting state but combine with tab visibility
+        this._visible = !document.hidden; 
+      }
+    };
     document.addEventListener('visibilitychange', this._visibilityHandler);
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -471,7 +481,8 @@ class MorphEngine {
   destroy() {
     cancelAnimationFrame(this.raf);
     if (this.tween) this.tween.kill();
-    this.resizeObserver.disconnect();
+    if (this.resizeObserver) this.resizeObserver.disconnect();
+    if (this._visObserver) this._visObserver.disconnect();
     if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
     this.canvas.removeEventListener('webglcontextlost', this.boundContextLost);
     this.textures.forEach(tex => {

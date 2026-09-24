@@ -146,19 +146,39 @@ const TextLoop = ({
     });
 
     const root = rootRef.current;
-    const pause = () => tween.pause();
-    const resume = () => tween.resume();
+    
+    // Play/Pause based on visibility
+    let visObserver;
+    if (root) {
+      visObserver = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          tween.resume();
+        } else {
+          tween.pause();
+        }
+      }, { threshold: 0 });
+      visObserver.observe(root);
+    }
+
+    const pauseHover = () => tween.pause();
+    const resumeHover = () => {
+      // Only resume on unhover if it's actually visible
+      if (!visObserver) tween.resume();
+      // Wait, if it's hovered, it MUST be visible, so resuming is fine.
+      tween.resume();
+    };
 
     if (pauseOnHover && root) {
-      root.addEventListener('pointerenter', pause);
-      root.addEventListener('pointerleave', resume);
+      root.addEventListener('pointerenter', pauseHover);
+      root.addEventListener('pointerleave', resumeHover);
     }
 
     return () => {
       tween.kill();
+      if (visObserver && root) visObserver.unobserve(root);
       if (pauseOnHover && root) {
-        root.removeEventListener('pointerenter', pause);
-        root.removeEventListener('pointerleave', resume);
+        root.removeEventListener('pointerenter', pauseHover);
+        root.removeEventListener('pointerleave', resumeHover);
       }
     };
   }, [metrics, speed, direction, pauseOnHover]);
