@@ -141,34 +141,37 @@ function App() {
     <main className={`relative w-full min-h-[100dvh] bg-[#2A1314] flex flex-col ${lockScroll ? 'h-[100dvh] overflow-hidden' : 'overflow-x-hidden'}`}>
 
       {/* =========================================
+          HEADER: LOGO & MENU TOGGLE (FIXED, Z-[80])
+          ========================================= */}
+      {/* LOGO IN ALTO A SINISTRA */}
+      <motion.div
+        className="fixed top-4 left-4 sm:top-6 sm:left-6 z-[80] cursor-pointer pointer-events-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showSplash ? 0 : 1 }}
+        transition={{ duration: 1, delay: 0.2 }}
+        onClick={handleHeaderClick}
+      >
+        <img
+          src={headerAnimating ? '/animato gif.gif' : '/cropped_gmi_singolo-removebg-preview.png'}
+          alt="GMI Torino Logo"
+          className="w-10 h-auto sm:w-12 object-contain"
+        />
+      </motion.div>
+
+      {/* MENU TOGGLE IN ALTO A DESTRA */}
+      <motion.div
+        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[80] pointer-events-auto text-[#D8A86C]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showSplash ? 0 : 1 }}
+        transition={{ duration: 1, delay: 0.2 }}
+      >
+        <MenuToggle open={menuOpen} onOpenChange={setMenuOpen} strokeWidth={2.5} />
+      </motion.div>
+
+      {/* =========================================
           SEZIONE HERO FISSA
           ========================================= */}
       <section className="fixed inset-0 w-full h-full overflow-hidden flex flex-col pointer-events-none z-0">
-
-        {/* LOGO IN ALTO A SINISTRA */}
-        <motion.div
-          className="absolute top-4 left-4 sm:top-6 sm:left-6 z-[60] cursor-pointer pointer-events-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: showSplash ? 0 : 1 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          onClick={handleHeaderClick}
-        >
-          <img
-            src={headerAnimating ? '/animato gif.gif' : '/cropped_gmi_singolo-removebg-preview.png'}
-            alt="GMI Torino Logo"
-            className="w-10 h-auto sm:w-12 object-contain"
-          />
-        </motion.div>
-
-        {/* MENU TOGGLE IN ALTO A DESTRA */}
-        <motion.div
-          className="absolute top-4 right-4 sm:top-6 sm:right-6 z-[70] pointer-events-auto text-[#D8A86C]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: showSplash ? 0 : 1 }}
-          transition={{ duration: 1, delay: 0.2 }}
-        >
-          <MenuToggle open={menuOpen} onOpenChange={setMenuOpen} strokeWidth={2.5} />
-        </motion.div>
 
         {/* DRIFT WALL DI SFONDO */}
         <motion.div
@@ -345,11 +348,11 @@ function App() {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 z-[65] bg-[#1A0B0C]/96 backdrop-blur-xl flex flex-col items-center justify-center p-8 pointer-events-auto"
-            initial={{ opacity: 0, clipPath: 'circle(0% at calc(100% - 40px) 40px)' }}
-            animate={{ opacity: 1, clipPath: 'circle(150% at calc(100% - 40px) 40px)' }}
-            exit={{ opacity: 0, clipPath: 'circle(0% at calc(100% - 40px) 40px)' }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-[65] bg-[#1A0B0C] flex flex-col items-center justify-center p-8 pointer-events-auto"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
           >
             <nav className="flex flex-col gap-6 sm:gap-8 text-center text-[#D8A86C]">
               {NAV_ITEMS.map((item, i) => (
@@ -380,7 +383,7 @@ function App() {
       <AnimatePresence>
         {activePage && (
           <motion.div
-            className="fixed inset-0 z-[75] bg-[#100608] pointer-events-auto flex flex-col"
+            className="fixed inset-0 z-[90] bg-[#100608] pointer-events-auto flex flex-col"
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: '0%' }}
             exit={{ opacity: 0, y: '100%' }}
