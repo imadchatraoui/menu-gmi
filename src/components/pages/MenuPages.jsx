@@ -19,12 +19,12 @@ const dishes = [
   {
     num: '01',
     name: 'Mediterranea',
-    desc: 'Ricotta vegana, pomodorini datterini, melanzane, scaglie di grana padano con caglio vegetale (Kinara).',
+    desc: 'Ricotta vegana, pomodorini datterini, melanzane alla griglia, scaglie di Grana Padano Kinara (caglio vegetale).',
   },
   {
     num: '02',
     name: 'Contadina',
-    desc: 'Rucola, crema di funghi, pomodorini datterini, scaglie di grana padano con caglio vegetale (Kinara).',
+    desc: 'Rucola, pomodorini datterini, crema di funghi fatta con formaggio Kinara stagionato piemontese (caglio vegetale).',
   },
 ];
 
@@ -66,6 +66,8 @@ export function PageMenu({ onClose }) {
         </div>
 
         <p className="menu-note">
+          <span style={{ color: '#D8A86C', display: 'block', marginBottom: '8px', fontWeight: 600 }}>Alternativa Senza Lattosio (Posti limitati)</span>
+          È possibile avere l'alternativa senza lattosio: al posto della ricotta e crema di funghi, offriamo mozzarella con caglio microbico.<br/><br/>
           Tutti i piatti rispettano le indicazioni halal.<br />
           Il menù è incluso nella quota di partecipazione.
         </p>
@@ -209,40 +211,16 @@ export function PageChiSiamo({ onClose }) {
       </div>
 
       <div className="page-scroll">
-        <div className="about-text">
+        <div className="about-text" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <p>
-            <strong>GMI Torino</strong> è la sezione torinese dei <em>Giovani Musulmani d&apos;Italia</em>,{' '}
-            un&apos;associazione che da oltre vent&apos;anni lavora per costruire ponti tra culture, promuovere il dialogo e{' '}
-            dare voce alle nuove generazioni di italiani di fede islamica.
+            Siamo la sezione torinese dei Giovani Musulmani Italiani. Rappresentiamo un intreccio di generazioni e culture accomunate dalla fede e dal desiderio di contribuire attivamente alla società. Il nostro obiettivo è promuovere l'aggregazione dei giovani sul territorio cittadino affinché si sentano parte di una comunità coesa e solidale.
           </p>
           <p>
-            Crediamo nella forza delle storie. Ogni voce conta, ogni esperienza è un tassello di un mosaico{' '}
-            più grande. Il nostro impegno è creare spazi sicuri dove parlare di identità, appartenenza e futuro.
+            Crediamo profondamente in un percorso di crescita che unisca la consapevolezza identitaria alla formazione. Vogliamo accompagnare le nuove generazioni nel diventare cittadini attivi nella società italiana e nella comunità islamica offrendo loro esperienze concrete in cui il protagonismo giovanile sia al centro di ogni iniziativa.
           </p>
           <p>
-            Attraverso eventi, incontri e attività culturali, vogliamo dimostrare che si può essere{' '}
-            pienamente italiani e pienamente musulmani — senza scegliere.
+            Come cuore pulsante delle attività a livello locale organizziamo momenti di incontro e dialogo. Tutto nasce dal confronto diretto e dal contributo volontario dei nostri membri perché siamo convinti che la vera forza risieda nel costruire insieme uno spazio condiviso in cui ognuno possa scoprire il proprio potenziale.
           </p>
-        </div>
-
-        <div className="about-values">
-          {[
-            { label: 'Dialogo', desc: 'Costruiamo ponti tra comunità diverse' },
-            { label: 'Crescita', desc: 'Investiamo nelle nuove generazioni' },
-            { label: 'Conoscenza', desc: 'La cultura come strumento di cambiamento' },
-            { label: 'Comunità', desc: 'Insieme siamo più forti' },
-          ].map((v, i) => (
-            <motion.div
-              key={i}
-              className="about-value-row"
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 + i * 0.09 }}
-            >
-              <span className="about-value-label">{v.label}</span>
-              <span className="about-value-desc">{v.desc}</span>
-            </motion.div>
-          ))}
         </div>
       </div>
     </motion.div>
@@ -273,7 +251,7 @@ export function PageContatti({ onClose }) {
 
       <div className="page-scroll">
         <div className="contact-cards">
-          <a href="mailto:torino@giovanimusulmani.it" className="contact-card">
+          <a href="mailto:gmitorino@gmail.com" className="contact-card">
             <span className="contact-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -282,7 +260,7 @@ export function PageContatti({ onClose }) {
             </span>
             <div>
               <p className="contact-label">Email</p>
-              <p className="contact-value">torino@giovanimusulmani.it</p>
+              <p className="contact-value">gmitorino@gmail.com</p>
             </div>
           </a>
           <a href="https://gmitalia.org/" target="_blank" rel="noopener noreferrer" className="contact-card">
@@ -311,28 +289,6 @@ export function PageContatti({ onClose }) {
               <p className="contact-value">@gmi.torino</p>
             </div>
           </a>
-        </div>
-
-        <div className="payment-section">
-          <h2 className="section-label">Iscrizione all&apos;evento</h2>
-          <p className="payment-note">
-            La quota di partecipazione è di <strong>10 €</strong> e comprende l&apos;intera giornata e il pranzo.
-            Il pagamento deve essere effettuato tramite bonifico bancario.
-          </p>
-          <div className="iban-box">
-            <div className="iban-row">
-              <span className="iban-key">IBAN</span>
-              <span className="iban-val">IT49 N030 6909 6061 0000 0065 288</span>
-            </div>
-            <div className="iban-row">
-              <span className="iban-key">Intestatario</span>
-              <span className="iban-val">Giovani Musulmani d&apos;Italia APS</span>
-            </div>
-            <div className="iban-row causale">
-              <span className="iban-key">Causale</span>
-              <span className="iban-val italic">Nome Cognome – iscrizione evento GMI Torino &quot;Raccontarci&quot;</span>
-            </div>
-          </div>
         </div>
 
         <div className="quran-verse">

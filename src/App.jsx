@@ -39,9 +39,8 @@ const ACCORDION_ITEMS = [
     title: 'Informazioni Generali',
     content: (
       <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui
-        mauris. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor
-        neque eu tellus rhoncus ut eleifend nibh porttitor.
+        Una giornata di incontri, testimonianze, dialoghi e workshop dedicata alle nuove generazioni musulmane in Italia e al modo in cui scelgono di raccontare la propria identità.<br/><br/>
+        Attraverso voce, cultura, moda, cibo, sport e impegno sociale, l’evento vuole creare uno spazio in cui i giovani possano essere protagonisti del racconto di sé stessi e del proprio ruolo nella società.
       </p>
     )
   },
@@ -63,19 +62,9 @@ const ACCORDION_ITEMS = [
         <li><strong style={{ color: '#D8A86C' }}>19:15 - 19:30</strong> – Saluti finali</li>
       </ul>
     )
-  },
-  {
-    title: 'Dettagli Iscrizione',
-    content: (
-      <div style={{ lineHeight: 1.7 }}>
-        <p>
-          Mauris massa. Vestibulum lacinia arcu eget nulla. Class aptent taciti
-          sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.
-        </p>
-      </div>
-    )
-  },
+  }
 ];
+
 
 // Nav menu items
 const NAV_ITEMS = [
@@ -129,8 +118,28 @@ function App() {
 
   // Elemento per il MorphSlider
   const menuItems = [
-    { image: '/s_nature.png',  caption: 'Mediterranea' },
-    { image: '/gatto2.jpg',    caption: 'Contadina' }
+    { 
+      image: '/s_nature.png',  
+      caption: (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-base sm:text-lg text-[#D8A86C] font-bold uppercase tracking-wider">Mediterranea</span>
+          <span className="text-[11px] sm:text-[13px] text-white/90 font-normal leading-snug">
+            Ricotta vegana, pomodorini datterini, melanzane alla griglia, scaglie di Grana Padano Kinara (caglio vegetale).
+          </span>
+        </div>
+      )
+    },
+    { 
+      image: '/gatto2.jpg',    
+      caption: (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-base sm:text-lg text-[#D8A86C] font-bold uppercase tracking-wider">Contadina</span>
+          <span className="text-[11px] sm:text-[13px] text-white/90 font-normal leading-snug">
+            Rucola, pomodorini datterini, crema di funghi fatta con formaggio Kinara stagionato piemontese (caglio vegetale).
+          </span>
+        </div>
+      )
+    }
   ];
 
   const lockScroll = showSplash || menuOpen || !!activePage;
