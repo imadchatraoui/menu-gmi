@@ -360,7 +360,9 @@ class CanvAscii {
 
     const { planeW, planeH } = this.calculatePlaneSize();
 
-    this.geometry = new THREE.PlaneGeometry(planeW, planeH, 36, 36);
+    const isMobile = window.innerWidth <= 768;
+    const segments = isMobile ? 18 : 36;
+    this.geometry = new THREE.PlaneGeometry(planeW, planeH, segments, segments);
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
@@ -383,7 +385,9 @@ class CanvAscii {
     if (this.geometry) {
       this.geometry.dispose();
     }
-    this.geometry = new THREE.PlaneGeometry(planeW, planeH, 36, 36);
+    const isMobile = window.innerWidth <= 768;
+    const segments = isMobile ? 18 : 36;
+    this.geometry = new THREE.PlaneGeometry(planeW, planeH, segments, segments);
     this.mesh.geometry = this.geometry;
   }
 
@@ -401,9 +405,9 @@ class CanvAscii {
     this.container.appendChild(this.filter.domElement);
     this.setSize(this.width, this.height);
 
-    this.container.addEventListener('mousemove', this.onMouseMove, { passive: true });
-    this.container.addEventListener('touchmove', this.onMouseMove, { passive: true });
-    this.container.addEventListener('touchstart', this.onMouseMove, { passive: true });
+    window.addEventListener('mousemove', this.onMouseMove, { passive: true });
+    window.addEventListener('touchmove', this.onMouseMove, { passive: true });
+    window.addEventListener('touchstart', this.onMouseMove, { passive: true });
   }
 
   setSize(w, h) {
@@ -433,15 +437,21 @@ class CanvAscii {
   }
 
   animate() {
-    const animateFrame = () => {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches || /Mobi|Android/i.test(navigator.userAgent);
+    const fpsLimit = isMobile ? 30 : 60;
+    const interval = 1000 / fpsLimit;
+    let lastTime = 0;
+    const animateFrame = (now) => {
       this.animationFrameId = requestAnimationFrame(animateFrame);
+      if (now - lastTime < interval) return;
+      lastTime = now;
       this.render();
     };
-    animateFrame();
+    this.animationFrameId = requestAnimationFrame(animateFrame);
   }
 
   render() {
-    const time = new Date().getTime() * 0.001;
+    const time = performance.now() * 0.001;
 
     this.textCanvas.render();
     this.texture.needsUpdate = true;
@@ -484,9 +494,9 @@ class CanvAscii {
         this.container.removeChild(this.filter.domElement);
       }
     }
-    this.container.removeEventListener('mousemove', this.onMouseMove);
-    this.container.removeEventListener('touchmove', this.onMouseMove);
-    this.container.removeEventListener('touchstart', this.onMouseMove);
+    window.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('touchmove', this.onMouseMove);
+    window.removeEventListener('touchstart', this.onMouseMove);
     this.clear();
     if (this.renderer) {
       this.renderer.dispose();
@@ -517,9 +527,11 @@ export default function ASCIIText({
     let lastW = 0;
     let lastH = 0;
 
+    const effectiveAsciiSize = window.innerWidth < 400 && asciiFontSize < 10 ? 11 : asciiFontSize;
+
     const createAndInit = async (container, w, h) => {
       const instance = new CanvAscii(
-        { text, asciiFontSize, textFontSize, textColor, planeBaseHeight, enableWaves },
+        { text, asciiFontSize: effectiveAsciiSize, textFontSize, textColor, planeBaseHeight, enableWaves },
         container,
         w,
         h

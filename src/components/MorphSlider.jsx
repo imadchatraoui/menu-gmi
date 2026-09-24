@@ -227,10 +227,13 @@ class MorphEngine {
     this.shownIndex = startIndex;
     this.tween = null;
 
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    const effectiveDpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : dprCap);
+
     this.renderer = new Renderer({
       alpha: false,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, dprCap)
+      antialias: !isMobile,
+      dpr: effectiveDpr
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0.05, 0.05, 0.06, 1);
@@ -273,6 +276,11 @@ class MorphEngine {
     this.boundContextLost = this.onContextLost.bind(this);
     this.canvas.addEventListener('webglcontextlost', this.boundContextLost, false);
 
+    // Pause rendering when tab is hidden — saves battery on old phones
+    this._visible = !document.hidden;
+    this._visibilityHandler = () => { this._visible = !document.hidden; };
+    document.addEventListener('visibilitychange', this._visibilityHandler);
+
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
     this.resize();
@@ -282,6 +290,7 @@ class MorphEngine {
     this.boundLoop = this.loop.bind(this);
     this.raf = requestAnimationFrame(this.boundLoop);
   }
+
 
   loadTextures() {
     this.items.forEach((item, index) => {
@@ -321,11 +330,13 @@ class MorphEngine {
   }
 
   loop(t) {
+    this.raf = requestAnimationFrame(this.boundLoop);
+    if (!this._visible) return;
     this.program.uniforms.uTime.value = t * 0.001;
     if (!this.dragging && !this.animating) this.syncOptions();
     this.renderer.render({ scene: this.mesh });
-    this.raf = requestAnimationFrame(this.boundLoop);
   }
+
 
   wrap(i) {
     const n = this.items.length;
@@ -461,6 +472,7 @@ class MorphEngine {
     cancelAnimationFrame(this.raf);
     if (this.tween) this.tween.kill();
     this.resizeObserver.disconnect();
+    if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
     this.canvas.removeEventListener('webglcontextlost', this.boundContextLost);
     this.textures.forEach(tex => {
       if (tex && tex.texture) this.gl.deleteTexture(tex.texture);
@@ -470,6 +482,7 @@ class MorphEngine {
     if (ext) ext.loseContext();
     if (this.canvas.parentNode) this.canvas.parentNode.removeChild(this.canvas);
   }
+
 }
 
 export default function MorphSlider({
