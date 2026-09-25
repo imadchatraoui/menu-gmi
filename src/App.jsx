@@ -119,7 +119,7 @@ function App() {
   // Elemento per il MorphSlider
   const menuItems = [
     { 
-      image: '/s_nature.png',  
+      image: '/gatto3.jpg',  
       caption: (
         <div className="flex flex-col gap-1.5">
           <span className="text-base sm:text-lg text-[#D8A86C] font-bold uppercase tracking-wider">Mediterranea</span>
