@@ -515,6 +515,7 @@ export default function MorphSlider({
   showControls = true,
   showIndicators = true,
   className = '',
+  onIndexChange,
   ...props
 }) {
   const containerRef = useRef(null);
@@ -535,7 +536,10 @@ export default function MorphSlider({
       reducedMotion,
       dprCap: 2,
       getOptions: () => optsRef.current,
-      onIndexChange: setIndex
+      onIndexChange: (newIndex) => {
+        setIndex(newIndex);
+        if (onIndexChange) onIndexChange(newIndex);
+      }
     });
     engineRef.current = engine;
     setIndex(startIndex);

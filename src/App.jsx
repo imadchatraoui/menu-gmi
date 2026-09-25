@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ASCIIText from './components/ASCIIText';
@@ -81,6 +81,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activePage, setActivePage] = useState(null); // null | 'menu' | 'evento' | 'chisiamo' | 'contatti'
   const [heroVisible, setHeroVisible] = useState(true);
+  const [activeSliderIndex, setActiveSliderIndex] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -117,30 +118,30 @@ function App() {
   const closePage = () => setActivePage(null);
 
   // Elemento per il MorphSlider
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { 
-      image: '/gatto3.jpg',  
+      image: '/contadina.jpg',  
       caption: (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-base sm:text-lg text-[#D8A86C] font-bold uppercase tracking-wider">Mediterranea</span>
-          <span className="text-[11px] sm:text-[13px] text-white/90 font-normal leading-snug">
-            Ricotta vegana, pomodorini datterini, melanzane alla griglia, scaglie di Grana Padano Kinara (caglio vegetale).
+        <div className="flex flex-col items-center justify-center gap-2">
+          <span className="text-lg sm:text-xl text-[#D8A86C] font-bold uppercase tracking-wider">Contadina</span>
+          <span className="text-sm sm:text-base text-white/80 font-normal leading-relaxed max-w-2xl text-center">
+            Rucola, pomodorini datterini, crema di funghi fatta con formaggio Kinara stagionato piemontese (caglio vegetale).
           </span>
         </div>
       )
     },
     { 
-      image: '/gatto2.jpg',    
+      image: '/mediterranea.jpg',    
       caption: (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-base sm:text-lg text-[#D8A86C] font-bold uppercase tracking-wider">Contadina</span>
-          <span className="text-[11px] sm:text-[13px] text-white/90 font-normal leading-snug">
-            Rucola, pomodorini datterini, crema di funghi fatta con formaggio Kinara stagionato piemontese (caglio vegetale).
+        <div className="flex flex-col items-center justify-center gap-2">
+          <span className="text-lg sm:text-xl text-[#D8A86C] font-bold uppercase tracking-wider">Mediterranea</span>
+          <span className="text-sm sm:text-base text-white/80 font-normal leading-relaxed max-w-2xl text-center">
+            Ricotta vegana, pomodorini datterini, melanzane alla griglia, scaglie di Grana Padano Kinara (caglio vegetale).
           </span>
         </div>
       )
     }
-  ];
+  ], []);
 
   const lockScroll = showSplash || menuOpen || !!activePage;
 
@@ -279,26 +280,34 @@ function App() {
             </ScrollReveal>
           </div>
 
-          {/* MorphSlider */}
-          <div className="w-full max-w-4xl aspect-[4/3] md:aspect-video relative rounded-2xl overflow-hidden shadow-2xl border border-[#D8A86C]/20 mb-20 md:mb-28">
-            <MorphSlider
-              items={menuItems}
-              transition="melt"
-              intensity={0.55}
-              aberration={0.35}
-              drift={0.4}
-              autoplay={true}
-              autoplayDelay={4}
-              overlayColor="#2A1314"
-              duration={1.1}
-              ease="power2.inOut"
-              scale={2.4}
-              loop={true}
-              radius={16}
-              showCaptions={true}
-              showControls={true}
-              showIndicators={true}
-            />
+          {/* MorphSlider Container */}
+          <div className="w-full max-w-4xl flex flex-col gap-5 mb-20 md:mb-28">
+            <div className="w-full aspect-[4/3] md:aspect-video relative rounded-2xl overflow-hidden shadow-2xl border border-[#D8A86C]/20">
+              <MorphSlider
+                items={menuItems}
+                transition="melt"
+                intensity={0.55}
+                aberration={0.35}
+                drift={0.4}
+                autoplay={true}
+                autoplayDelay={9}
+                overlayColor="#2A1314"
+                duration={1.1}
+                ease="power2.inOut"
+                scale={2.4}
+                loop={true}
+                radius={16}
+                showCaptions={false}
+                showControls={true}
+                showIndicators={true}
+                onIndexChange={setActiveSliderIndex}
+              />
+            </div>
+            
+            {/* External Caption (Under the image) */}
+            <div className="w-full text-center px-4">
+              {menuItems[activeSliderIndex]?.caption}
+            </div>
           </div>
         </div>
 
