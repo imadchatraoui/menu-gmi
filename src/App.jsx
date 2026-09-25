@@ -120,7 +120,7 @@ function App() {
   // Elemento per il MorphSlider
   const menuItems = useMemo(() => [
     { 
-      image: '/contadina.jpg',  
+      image: '/contadina.webp',  
       caption: (
         <div className="flex flex-col items-center justify-center gap-2">
           <span className="text-lg sm:text-xl text-[#D8A86C] font-bold uppercase tracking-wider">Contadina</span>
@@ -131,12 +131,12 @@ function App() {
       )
     },
     { 
-      image: '/mediterranea.jpg',    
+      image: '/mediterranea.webp',    
       caption: (
         <div className="flex flex-col items-center justify-center gap-2">
           <span className="text-lg sm:text-xl text-[#D8A86C] font-bold uppercase tracking-wider">Mediterranea</span>
           <span className="text-sm sm:text-base text-white/80 font-normal leading-relaxed max-w-2xl text-center">
-            Ricotta vegana, pomodorini datterini, melanzane alla griglia, scaglie di Grana Padano Kinara (caglio vegetale).
+            Ricotta vegana, pomodorini datterini, melanzane alla griglia, formaggio stagionato di Kinara (caglio vegetale).
           </span>
         </div>
       )
