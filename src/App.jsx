@@ -305,8 +305,12 @@ function App() {
             </div>
             
             {/* External Caption (Under the image) */}
-            <div className="w-full text-center px-4">
+            <div className="w-full text-center px-4 flex flex-col items-center">
               {menuItems[activeSliderIndex]?.caption}
+              
+              <p className="mt-5 text-[11px] sm:text-[13px] text-white/50 max-w-xl italic">
+                * Alternativa senza lattosio disponibile su richiesta (mozzarella con caglio microbico). Posti limitati.
+              </p>
             </div>
           </div>
         </div>
