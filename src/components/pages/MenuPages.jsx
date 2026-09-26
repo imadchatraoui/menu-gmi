@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect } from 'react';
 import TextLoop from '../TextLoop';
-import GlitchText from '../GlitchText';
 import './MenuPages.css';
 
 
