@@ -27,6 +27,9 @@ Built to deliver a premium, fluid, and highly interactive user experience throug
 - **Extreme Mobile Optimization:** Dynamically mounts/unmounts heavy Canvas/WebGL components using `IntersectionObserver` to preserve battery life and maintain 60FPS on smartphones.
 - **Dark & Elegant Aesthetics:** Carefully crafted palette featuring deep crimsons (`#2A1314`) and rich gold (`#D8A86C`), avoiding generic "AI-generated" looks.
 
+## Demo
+
+
 ## 🛠️ Architecture & Performance
 
 This project relies heavily on hardware-accelerated graphics. To ensure it runs perfectly on mid-range smartphones without overheating:
