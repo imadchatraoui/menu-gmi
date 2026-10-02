@@ -29,6 +29,7 @@ Built to deliver a premium, fluid, and highly interactive user experience throug
 
 ## Demo
 
+[menu.musulmani.org](https://menu.musulmani.org)
 
 ## 🛠️ Architecture & Performance
 
